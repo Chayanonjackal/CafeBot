@@ -11,6 +11,6 @@
 //     // }
 // }
 module.exports = function cmd(req, res, next) {
-    console.log('test');
+    console.log(req);
     return next();
 }
