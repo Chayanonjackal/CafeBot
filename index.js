@@ -15,11 +15,12 @@ const Schema = require("./schema");
 
 require("dotenv").config();
 
+const coffeeMakerChanel = process.env.COFFEE_MAKER
+
 client.on("ready", async () => {
   await mongoose.connect(process.env.MONGO_URI || "", {
     keepAlive: true,
   });
-
   console.log("i'm ready");
   client.user.setActivity("Ready to serve", {
     type: "PLAYING",
@@ -62,7 +63,7 @@ client.on("messageCreate", (message) => {
       message.channel.send({ embeds: [orderEmbed] });
       //   console.log(message.channel.id); form get chanal message
       client.channels.cache
-        .get("939129176835915808")
+        .get(coffeeMakerChanel)
         .send({ embeds: [orderEmbed] });
 
       setTimeout(async () => {
@@ -79,55 +80,56 @@ client.on("messageCreate", (message) => {
         }).save();
       }, 1000);
     }
-    if (message.content.indexOf(";ol") === 0) {
-      console.log("=======================");
-      Schema.find({}, (error, data) => {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log(data);
-          message.channel.send("=========== Order List =============");
-          for (let i = 0; i < data.length; i++) {
-            message.channel.send(
-              `Name : ${data[i].username} , Order : ${data[i].content}`
-            );
-          }
-        }
-      });
-    }
-    //Order Info
-    if (message.content.indexOf(";oif") === 0) {
-      let messageCut = message.content.replace(";oif", "");
-      Schema.find({ name: messageCut }, (error, data) => {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log(data);
-          for (let i = 0; i < data.length; i++) {
-            let messageOrderCut = data[i].content.replace(";order", "");
-              const infoEmbed = new MessageEmbed()
-              .setColor("#0099ff")
-            //   .setTitle(`Order info ${data[i].username}`)
-              .setAuthor({
-                name: `${data[i].username}`,
-                iconURL: `${data[i].displayAvatarURL}`,
-              })
-              .setThumbnail(
-                `${data[i].displayAvatarURL}`
-                // `dddd`
-              )
-              .addFields(
-                { name: "Order", value: messageOrderCut },
-                { name: "\u200B", value: "\u200B" }
-              )
-              .setTimestamp();
-            message.channel.send({ embeds: [infoEmbed] });
 
-              
+    //for coffe maker
+    if (message.channelId === coffeeMakerChanel) {
+      if (message.content.indexOf(";ol") === 0) {
+        // console.log("=======================");
+        Schema.find({}, (error, data) => {
+          if (error) {
+            console.log(error);
+          } else {
+            // console.log(data);
+            message.channel.send("=========== Order List =============");
+            for (let i = 0; i < data.length; i++) {
+              message.channel.send(
+                `Name : ${data[i].username} , Order : ${data[i].content}`
+              );
+            }
           }
-         
-        }
-      });
+        });
+      }
+      //Order Info
+      if (message.content.indexOf(";oif") === 0) {
+        let messageCut = message.content.replace(";oif", "");
+        Schema.find({ name: messageCut }, (error, data) => {
+          if (error) {
+            console.log(error);
+          } else {
+            console.log(data);
+            for (let i = 0; i < data.length; i++) {
+              let messageOrderCut = data[i].content.replace(";order", "");
+              const infoEmbed = new MessageEmbed()
+                .setColor("#0099ff")
+                //   .setTitle(`Order info ${data[i].username}`)
+                .setAuthor({
+                  name: `${data[i].username}`,
+                  iconURL: `${data[i].displayAvatarURL}`,
+                })
+                .setThumbnail(
+                  `${data[i].displayAvatarURL}`
+                  // `dddd`
+                )
+                .addFields(
+                  { name: "Order", value: messageOrderCut },
+                  { name: "\u200B", value: "\u200B" }
+                )
+                .setTimestamp();
+              message.channel.send({ embeds: [infoEmbed] });
+            }
+          }
+        });
+      }
     }
     // message.reply({
     //     content: 'call me?'
