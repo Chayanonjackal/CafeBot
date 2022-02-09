@@ -11,6 +11,7 @@ const client = new Client({
   intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
 });
 const mongoose = require("mongoose");
+const schema = require("./schema");
 const Schema = require("./schema");
 
 require("dotenv").config();
@@ -65,20 +66,38 @@ client.on("messageCreate", (message) => {
       client.channels.cache
         .get(coffeeMakerChanel)
         .send({ embeds: [orderEmbed] });
+        if(messageCut.indexOf(" ") === 0){
+          setTimeout(async () => {
+            let cutSpace = messageCut.replace(" ","");
+            await new Schema({
+              channelId: message.channelId,
+              guildId: message.guildId,
+              id: message.id,
+              content: cutSpace,
+              userId: message.author.id,
+              username: message.author.username,
+              discriminator: message.author.discriminator,
+              avatar: message.author.avatar,
+              displayAvatarURL: message.author.displayAvatarURL({ dynamic: true }),
+            }).save();
+          }, 1000);
+        }else{
+          setTimeout(async () => {
+            await new Schema({
+              channelId: message.channelId,
+              guildId: message.guildId,
+              id: message.id,
+              content: messageCut,
+              userId: message.author.id,
+              username: message.author.username,
+              discriminator: message.author.discriminator,
+              avatar: message.author.avatar,
+              displayAvatarURL: message.author.displayAvatarURL({ dynamic: true }),
+            }).save();
+          }, 1000);
+        }
 
-      setTimeout(async () => {
-        await new Schema({
-          channelId: message.channelId,
-          guildId: message.guildId,
-          id: message.id,
-          content: message.content,
-          userId: message.author.id,
-          username: message.author.username,
-          discriminator: message.author.discriminator,
-          avatar: message.author.avatar,
-          displayAvatarURL: message.author.displayAvatarURL({ dynamic: true }),
-        }).save();
-      }, 1000);
+      
     }
 
     //for coffe maker
@@ -89,7 +108,6 @@ client.on("messageCreate", (message) => {
           if (error) {
             console.log(error);
           } else {
-            // console.log(data);
             message.channel.send("=========== Order List =============");
             for (let i = 0; i < data.length; i++) {
               message.channel.send(
@@ -102,43 +120,97 @@ client.on("messageCreate", (message) => {
       //Order Info
       if (message.content.indexOf(";oif") === 0) {
         let messageCut = message.content.replace(";oif", "");
-        Schema.find({ name: messageCut }, (error, data) => {
-          if (error) {
-            console.log(error);
-          } else {
-            console.log(data);
-            for (let i = 0; i < data.length; i++) {
-              let messageOrderCut = data[i].content.replace(";order", "");
-              const infoEmbed = new MessageEmbed()
-                .setColor("#0099ff")
-                //   .setTitle(`Order info ${data[i].username}`)
-                .setAuthor({
-                  name: `${data[i].username}`,
-                  iconURL: `${data[i].displayAvatarURL}`,
-                })
-                .setThumbnail(
-                  `${data[i].displayAvatarURL}`
-                  // `dddd`
-                )
-                .addFields(
-                  { name: "Order", value: messageOrderCut },
-                  { name: "\u200B", value: "\u200B" }
-                )
-                .setTimestamp();
-              message.channel.send({ embeds: [infoEmbed] });
+        if (messageCut.indexOf(" ") === 0) {
+          // userInfo(messageCut)
+          let messageOifCut = messageCut.replace(" ", "");
+          console.log(messageOifCut);
+          Schema.find({ username: messageOifCut }, (error, data) => {
+            if (error) {
+              console.log(error);
+            } else {
+              console.log(data);
+              for (let i = 0; i < data.length; i++) {
+                // let messageOrderCut = data[i].content.replace(";order", "");
+                const infoEmbed = new MessageEmbed()
+                  .setColor("#0099ff")
+                  //   .setTitle(`Order info ${data[i].username}`)
+                  .setAuthor({
+                    name: `${data[i].username}`,
+                    iconURL: `${data[i].displayAvatarURL}`,
+                  })
+                  .setThumbnail(
+                    `${data[i].displayAvatarURL}`
+                    // `dddd`
+                  )
+                  .addFields(
+                    { name: "Order", value: data[i].content },
+                    { name: "\u200B", value: "\u200B" }
+                  )
+                  .setTimestamp();
+                message.channel.send({ embeds: [infoEmbed] });
+              }
             }
-          }
-        });
+          });
+        }
+       
+      }
+
+      //CancleOrder
+      if (message.content.indexOf(";dl") === 0) {
+        const messageCut = message.content.replace(";dl","")
+        if (messageCut.indexOf(" ") === 0) {
+          const messageSpaceCut = messageCut.replace(" ","")
+          schema.find( { content: messageSpaceCut  } , (err,data) => {
+              if (err) {
+                console.log(err);
+              }else{
+                console.log(data);
+                for (let index = 0; index < data.length; index++) {
+                   message.channel.send(`Delete Order <${data[index].content}> from <${data[index].username}> already`)
+                   
+                  }
+                  schema.find( { content: messageSpaceCut  } , () => {} ).remove();
+                  
+              }
+          })
+        }
       }
     }
-    // message.reply({
-    //     content: 'call me?'
-    // })
-    // message.react('🤔')
-    // message.channel.send(`${message.author} Hi what do u want? `)
-    // message.channel.send(`Hello <@${message.author.id}>`)
-    // message.channel.send({ embeds: [exampleEmbed] });
+
+
   }
 });
+
+
+function userInfo(messageCut) {
+  let messageOifCut = messageCut.replace(" ", "");
+  Schema.find({ name: messageOifCut }, (error, data) => {
+    if (error) {
+      console.log(error);
+    } else {
+      for (let i = 0; i < data.length; i++) {
+        // let messageOrderCut = data[i].content.replace(";order", "");
+        const infoEmbed = new MessageEmbed()
+          .setColor("#0099ff")
+          //   .setTitle(`Order info ${data[i].username}`)
+          .setAuthor({
+            name: `${data[i].username}`,
+            iconURL: `${data[i].displayAvatarURL}`,
+          })
+          .setThumbnail(
+            `${data[i].displayAvatarURL}`
+            // `dddd`
+          )
+          .addFields(
+            { name: "Order", value: data[i].content },
+            { name: "\u200B", value: "\u200B" }
+          )
+          .setTimestamp();
+        message.channel.send({ embeds: [infoEmbed] });
+      }
+    }
+  });
+  
+}
 
 client.login(process.env.TOKEN);
